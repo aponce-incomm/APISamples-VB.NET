@@ -7,14 +7,16 @@ Imports System.IO
 Imports System.Xml
 Imports System.Net
 Imports TSG_API_Client.TSG_API_Client
+Imports System.Web.Script.Serialization
 
 Module Program
     Sub Main(ByVal args As String())
         Try
             'Settings
-            Dim apiUrl As String = ""
-            Dim apiKey As String = ""
+            Dim apiUrl As String = "https://sandbox.thesecuregateway.com/rest/v1/transactions"
+            Dim apiKey As String = "a20effd6dc1d4512888e6b06d870248a"
             Dim timeout As Integer = 15000 'Milliseconds
+            Dim lang_type As String = "xml" '"xml" or "json"
 
             'Populate Transaction Request Info
             Dim transaction_req As New transaction_request()
@@ -46,7 +48,7 @@ Module Program
             bl.zip = "07097"
             bl.country = "USA"
             bl.phone = "123456789"
-        
+
             transaction_req.billing = bl
 
             Dim sh As New shipping()
@@ -63,26 +65,37 @@ Module Program
 
             transaction_req.shipping = sh
 
-            'Serialize transaction object to XML representation
-            Dim ns As New XmlSerializerNamespaces()
-            ns.Add("", "")
-            Dim serializer As New System.Xml.Serialization.XmlSerializer(GetType(transaction_request))
-            Dim ms As New MemoryStream()
-            Dim Utf8 As Encoding = New UTF8Encoding(False)
-            Dim xmlTextWriter As New XmlTextWriter(ms, Utf8)
-            xmlTextWriter.Formatting = Formatting.Indented
-            serializer.Serialize(xmlTextWriter, transaction_req, ns)
-            Dim xml_request As String = Utf8.GetString(ms.ToArray())
+            Dim request As String = ""
+            If ("xml".Equals(lang_type)) Then
+                'Serialize transaction object to XML representation
+                Dim ns As New XmlSerializerNamespaces()
+                ns.Add("", "")
+                Dim serializer As New System.Xml.Serialization.XmlSerializer(GetType(transaction_request))
+                Dim ms As New MemoryStream()
+                Dim Utf8 As Encoding = New UTF8Encoding(False)
+                Dim xmlTextWriter As New XmlTextWriter(ms, Utf8)
+                xmlTextWriter.Formatting = Formatting.Indented
+                serializer.Serialize(xmlTextWriter, transaction_req, ns)
+                request = Utf8.GetString(ms.ToArray())
+            Else
+                'Serialize transaction object to JSON representation
+                transaction_req.avs_address = Nothing
+                transaction_req.avs_zip = Nothing
+                Dim serializer As New JavaScriptSerializer()
+                Dim tmp As String = serializer.Serialize(transaction_req)
+                request = tmp.Replace("""avs_address"":null,""avs_zip"":null,", "") 'avoid avs_address and avs_zip fields
+            End If
+
 
             'Execute request to gateway
             Console.WriteLine("-----------------------------------------------------")
             Console.WriteLine("REQUEST TO URL: " & apiUrl)
-            Console.WriteLine("POST DATA: " & Environment.NewLine & xml_request)
+            Console.WriteLine("POST DATA: " & Environment.NewLine & request)
             Dim req As HttpWebRequest = TryCast(WebRequest.Create(New Uri(apiUrl)), HttpWebRequest)
             req.Method = "POST"
-            req.ContentType = "application/xml"
+            req.ContentType = "application/" & lang_type
             req.AuthenticationLevel = System.Net.Security.AuthenticationLevel.None
-            Dim dataByteLen As Byte() = UTF8Encoding.UTF8.GetBytes(xml_request)
+            Dim dataByteLen As Byte() = UTF8Encoding.UTF8.GetBytes(request)
             req.ContentLength = dataByteLen.Length
             req.Timeout = timeout
             Dim post As Stream = req.GetRequestStream()
@@ -91,14 +104,23 @@ Module Program
 
             Dim resp As HttpWebResponse = TryCast(req.GetResponse(), HttpWebResponse)
             Dim reader As New StreamReader(resp.GetResponseStream())
-            Dim xml_response As String = reader.ReadToEnd()
+            Dim response As String = reader.ReadToEnd()
 
             Console.WriteLine("-----------------------------------------------------")
-            Console.WriteLine("RESPONSE DATA: " & Environment.NewLine & xml_response)
+            Console.WriteLine("RESPONSE DATA: " & Environment.NewLine & response)
 
-            If xml_response.Contains("<transaction>") Then
-                serializer = New System.Xml.Serialization.XmlSerializer(GetType(transaction_response))
-                Dim transaction_res As transaction_response = DirectCast(serializer.Deserialize(New StringReader(xml_response)), transaction_response)
+            If response.Contains("<transaction>") Or response.Contains("""transaction""") Then
+                Dim transaction_res As transaction_response
+                If ("xml".Equals(lang_type)) Then
+                    Dim serializer As New System.Xml.Serialization.XmlSerializer(GetType(transaction_response))
+                    transaction_res = DirectCast(serializer.Deserialize(New StringReader(response)), transaction_response)
+                Else
+                    Dim serializer As New JavaScriptSerializer()
+                    'remove 'transaction' element from the string response
+                    response = response.Replace("{""transaction"":", "")
+                    response = response.Remove(response.Length - 1)
+                    transaction_res = serializer.Deserialize(Of transaction_response)(response)
+                End If
 
                 If transaction_res.result_code IsNot Nothing AndAlso transaction_res.result_code = "0000" Then
                     Console.WriteLine("-----------------------------------------------------")
