@@ -10,3 +10,7 @@ C:\Documents and Settings\TECRO\Escritorio\APIs JSON\VB\TheSecureGateway-APISamp
 C:\Documents and Settings\TECRO\Escritorio\APIs JSON\VB\TheSecureGateway-APISamples-VB.NET-ae8c29f\obj\x86\Debug\TSG_API_Client.pdb
 C:\Documents and Settings\TECRO\Escritorio\APIs JSON\VB\TheSecureGateway-APISamples-VB.NET-ae8c29f\bin\Debug\TSG_API_Client.exe.config
 C:\Documents and Settings\TECRO\Escritorio\APIs JSON\VB\TheSecureGateway-APISamples-VB.NET-ae8c29f\bin\Debug\System.Web.Extensions.dll
+C:\Documents and Settings\TECRO\Escritorio\TSG-800 JSON API Samples\VB\TheSecureGateway-APISamples-VB.NET-ae8c29f\bin\Debug\TSG_API_Client.exe.config
+C:\Documents and Settings\TECRO\Escritorio\TSG-800 JSON API Samples\VB\TheSecureGateway-APISamples-VB.NET-ae8c29f\obj\x86\Debug\TSG_API_Client.exe
+C:\Documents and Settings\TECRO\Escritorio\TSG-800 JSON API Samples\VB\TheSecureGateway-APISamples-VB.NET-ae8c29f\obj\x86\Debug\TSG_API_Client.xml
+C:\Documents and Settings\TECRO\Escritorio\TSG-800 JSON API Samples\VB\TheSecureGateway-APISamples-VB.NET-ae8c29f\obj\x86\Debug\TSG_API_Client.pdb

@@ -13,10 +13,10 @@ Module Program
     Sub Main(ByVal args As String())
         Try
             'Settings
-            Dim apiUrl As String = "https://sandbox.thesecuregateway.com/rest/v1/transactions"
-            Dim apiKey As String = "a20effd6dc1d4512888e6b06d870248a"
+            Dim apiUrl As String = ""
+            Dim apiKey As String = ""
             Dim timeout As Integer = 15000 'Milliseconds
-            Dim lang_type As String = "xml" '"xml" or "json"
+            Dim lang_type As String = "" '"xml" or "json"
 
             'Populate Transaction Request Info
             Dim transaction_req As New transaction_request()
@@ -109,16 +109,13 @@ Module Program
             Console.WriteLine("-----------------------------------------------------")
             Console.WriteLine("RESPONSE DATA: " & Environment.NewLine & response)
 
-            If response.Contains("<transaction>") Or response.Contains("""transaction""") Then
+            If response.Contains("<transaction>") Or response.Contains("""id""") Then
                 Dim transaction_res As transaction_response
                 If ("xml".Equals(lang_type)) Then
                     Dim serializer As New System.Xml.Serialization.XmlSerializer(GetType(transaction_response))
                     transaction_res = DirectCast(serializer.Deserialize(New StringReader(response)), transaction_response)
                 Else
                     Dim serializer As New JavaScriptSerializer()
-                    'remove 'transaction' element from the string response
-                    response = response.Replace("{""transaction"":", "")
-                    response = response.Remove(response.Length - 1)
                     transaction_res = serializer.Deserialize(Of transaction_response)(response)
                 End If
 
